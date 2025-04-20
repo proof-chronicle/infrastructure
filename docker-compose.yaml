@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Nginx reverse proxy for domain routing
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    volumes:
+      - ./hosts/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../webapp/public:/var/www/html/public:ro
+    depends_on:
+      - webapp
+
+  # Laravel web application (admin portal & validation page)
+  webapp:
+    build:
+      context: ../webapp
+      dockerfile: Dockerfile
+    container_name: webapp
+    env_file:
+      - .env
+    expose:
+      - '80'
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    volumes:
+      - ../webapp:/var/www/html
+
+  # MySQL for metadata
+  db:
+    image: mysql:8.0
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - '3306:3306'
+    env_file:
+      - .env
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # Redis for caching and temporary data
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+
+  # RabbitMQ for task queue
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbit
+      RABBITMQ_DEFAULT_PASS: rabbit
+
+volumes:
+  db_data:
+  redis_data:
