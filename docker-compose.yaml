@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'  # потрібна для `condition: service_healthy`
 
 services:
   # Nginx reverse proxy for domain routing
@@ -19,6 +19,7 @@ services:
       context: ../webapp
       dockerfile: Dockerfile
     container_name: webapp
+    restart: unless-stopped
     env_file:
       - .env
     expose:
@@ -63,8 +64,14 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: rabbit
       RABBITMQ_DEFAULT_PASS: rabbit
+      RABBITMQ_LOAD_DEFINITIONS: /etc/rabbitmq/definitions.json
     volumes:
       - ./rabbit/definitions.json:/etc/rabbitmq/definitions.json
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Content Indexer Worker (Go service)
   content-indexer:
@@ -72,12 +79,14 @@ services:
       context: ../content-indexer
       dockerfile: Dockerfile
     container_name: content-indexer
+    restart: unless-stopped
     env_file:
       - ../content-indexer/.env
     depends_on:
-      - rabbitmq
-      - db
-    restart: unless-stopped
+      rabbitmq:
+        condition: service_healthy
+      db:
+        condition: service_started
 
 volumes:
   db_data:
