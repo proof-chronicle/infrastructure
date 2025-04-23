@@ -2,6 +2,8 @@
 
 This repository contains docker configuration for running projects locally
 
+![visualisation](./docker_compose_architecture.png)
+
 
 ## Setup
 - Install Docker Desktop
