@@ -1,7 +1,6 @@
 services:
   nginx:
     image: nginx:alpine
-    container_name: nginx
     restart: unless-stopped
     ports:
       - '80:80'
@@ -30,7 +29,6 @@ services:
   # MySQL for metadata
   db:
     image: mysql:8.0
-    container_name: db
     restart: unless-stopped
     ports:
       - '3306:3306'
@@ -74,7 +72,13 @@ services:
     build:
       context: ../content-indexer
       dockerfile: Dockerfile
-    container_name: content-indexer
+    develop:
+      watch:
+      - action: sync+restart
+        path: ../content-indexer
+        target: /app
+        patterns:
+        - '*.go'
     restart: unless-stopped
     env_file:
       - ../content-indexer/.env
