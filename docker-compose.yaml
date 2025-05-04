@@ -80,6 +80,46 @@ services:
     volumes:
       - ../content-indexer:/app
 
+  # solana-validator:
+  #   image: solanalabs/solana:stable
+  #   restart: unless-stopped
+  #   entrypoint:
+  #     - solana-test-validator
+  #     - --reset
+  #     - --quiet
+  #   ports:
+  #     - '8899:8899'
+  #     - '8900:8900'
+
+  # contract-deployer:
+  #   image: rust:1.86-alpine
+  #   container_name: contract-deployer
+  #   working_dir: /workspace
+  #   volumes:
+  #     - ../chain-gateway:/workspace
+  #     - ./solana/key:/root/.config/solana
+  #   env_file:
+  #     - ../chain-gateway/.env
+  #   command: anchor deploy --provider.cluster localnet
+  #   depends_on:
+  #     - solana-validator
+
+  chain-gateway:
+    build:
+      context: ../chain-gateway
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - ./solana/key:/root/.config/solana
+      - ./scripts:/scripts:ro
+    env_file:
+      - ../chain-gateway/.env
+    restart: unless-stopped
+    ports:
+      - "50051:50051" 
+    # depends_on:
+      # - solana-validator
+
   adminer:
     image: adminer
     restart: always
