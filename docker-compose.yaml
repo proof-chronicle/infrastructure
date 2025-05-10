@@ -14,7 +14,6 @@ services:
     build:
       context: ../webapp
       dockerfile: Dockerfile
-    container_name: webapp
     restart: unless-stopped
     expose:
       - '80'
@@ -37,7 +36,6 @@ services:
 
   redis:
     image: redis:6-alpine
-    container_name: redis
     restart: unless-stopped
     ports:
       - '6379:6379'
@@ -46,17 +44,13 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: rabbitmq
     restart: unless-stopped
     ports:
       - '5672:5672'
       - '15672:15672'
-    environment:
-      RABBITMQ_DEFAULT_USER: rabbit
-      RABBITMQ_DEFAULT_PASS: rabbit
-      RABBITMQ_LOAD_DEFINITIONS: /etc/rabbitmq/definitions.json
     volumes:
       - ./rabbit/definitions.json:/etc/rabbitmq/definitions.json
+      - ./rabbit/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
@@ -131,7 +125,6 @@ services:
 
   mailhog:
     image: mailhog/mailhog
-    container_name: 'mailhog'
     ports:
       - "1025:1025"
       - "8025:8025"

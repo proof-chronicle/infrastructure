@@ -1,12 +1,30 @@
 {
-    "queues": [
-      {
-        "name": "index_tasks",
-        "vhost": "/",
-        "durable": true,
-        "auto_delete": false,
-        "arguments": {}
-      }
-    ]
+  "rabbit_version": "3.8.16",
+  "users": [
+    {
+      "name": "rabbit",
+      "password": "rabbit",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "permissions": [
+    {
+      "user": "rabbit",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "queues": [
+    {
+      "name": "index_tasks",
+      "vhost": "/",
+      "durable": true
+    }
+  ],
+  "bindings": []
 }
-  
