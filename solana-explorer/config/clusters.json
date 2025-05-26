@@ -1,0 +1,11 @@
+{
+  "clusters": [
+    {
+      "name": "Local Validator",
+      "url": "http://localhost:8899",
+      "label": "local",
+      "badge": "local"
+    }
+  ],
+  "defaultCluster": "local"
+}

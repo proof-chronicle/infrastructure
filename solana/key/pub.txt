@@ -1,0 +1,6 @@
+===============================================================================
+pubkey: CA9rQsM2ifdX716wfjfEjDWuq8TbheVtCFzs7L6rm7mz
+===============================================================================
+Save this seed phrase and your BIP39 passphrase to recover your new keypair:
+total vital intact fade matrix volcano drama snack appear family betray assault
+===============================================================================

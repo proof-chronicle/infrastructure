@@ -74,29 +74,40 @@ services:
     volumes:
       - ../content-indexer:/app
 
-  # solana-validator:
-  #   image: solanalabs/solana:stable
-  #   restart: unless-stopped
-  #   entrypoint:
-  #     - solana-test-validator
-  #     - --reset
-  #     - --quiet
-  #   ports:
-  #     - '8899:8899'
-  #     - '8900:8900'
+  contract-builder:
+    build:
+      context: ../solana-proof-store
+    working_dir: /app
+    volumes:
+      - ../solana-proof-store:/app
+    command: cargo build-sbf --manifest-path Cargo.toml --sbf-out-dir /app/target/deploy
+    # This container should exit after building
+    restart: "no"
 
-  # contract-deployer:
-  #   image: rust:1.86-alpine
-  #   container_name: contract-deployer
-  #   working_dir: /workspace
-  #   volumes:
-  #     - ../chain-gateway:/workspace
-  #     - ./solana/key:/root/.config/solana
-  #   env_file:
-  #     - ../chain-gateway/.env
-  #   command: anchor deploy --provider.cluster localnet
-  #   depends_on:
-  #     - solana-validator
+  solana-validator:
+    image: solanalabs/solana:stable
+    restart: unless-stopped
+    volumes:
+      - ./solana/key:/root/.config/solana
+      - ../solana-proof-store/target/deploy:/programs:ro
+    depends_on:
+      contract-builder:
+        condition: service_completed_successfully
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        solana-test-validator --reset --quiet &
+        VALIDATOR_PID=$$!
+        echo "Waiting for validator to start..."
+        sleep 10
+        echo "Deploying program..."
+        solana program deploy /programs/proof_store.so --url http://localhost:8899
+        echo "Program deployed, validator ready"
+        wait $$VALIDATOR_PID
+    ports:
+      - '8899:8899'
+      - '8900:8900'
 
   chain-gateway:
     build:
@@ -129,6 +140,33 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  solana-explorer:
+    build:
+      context: ./solana-explorer
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - solana-validator
+    volumes:
+      - ./solana-explorer/config:/app/config:ro
+    environment:
+      # Next.js environment variables (these are used by the browser)
+      - NEXT_PUBLIC_CLUSTER=custom
+      - NEXT_PUBLIC_CLUSTER_URL=http://localhost:8899
+      - NEXT_PUBLIC_CLUSTER_NAME=Local Validator
+      - NEXT_PUBLIC_EXPLORER_API_URL=http://localhost:8899
+      # Legacy React environment variables (fallback)
+      - REACT_APP_CLUSTER=custom
+      - REACT_APP_CLUSTER_URL=http://localhost:8899
+      - REACT_APP_CLUSTER_NAME=Local Validator
+      # Disable mainnet connections
+      - NEXT_PUBLIC_DISABLE_MAINNET=true
+      - NODE_ENV=development
+
 volumes:
   db_data:
   redis_data:
+  solana_explorer_data:
+  solana_explorer_cache:
