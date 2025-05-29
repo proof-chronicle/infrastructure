@@ -77,11 +77,10 @@ services:
   contract-builder:
     build:
       context: ../solana-proof-store
+      dockerfile: Dockerfile
     working_dir: /app
     volumes:
       - ../solana-proof-store:/app
-    command: cargo build-sbf --manifest-path Cargo.toml --sbf-out-dir /app/target/deploy
-    # This container should exit after building
     restart: "no"
 
   solana-validator:
@@ -97,17 +96,34 @@ services:
       - /bin/sh
       - -c
       - |
+        echo "Starting Solana validator..."
         solana-test-validator --reset --quiet &
         VALIDATOR_PID=$$!
+        
         echo "Waiting for validator to start..."
         sleep 10
+        
         echo "Deploying program..."
         solana program deploy /programs/proof_store.so --url http://localhost:8899
-        echo "Program deployed, validator ready"
+        echo "Program deployed successfully"
+        
+        echo "Airdropping SOL to default account..."
+        solana airdrop 10 CA9rQsM2ifdX716wfjfEjDWuq8TbheVtCFzs7L6rm7mz --url http://localhost:8899
+        
+        echo "Checking balance..."
+        solana balance CA9rQsM2ifdX716wfjfEjDWuq8TbheVtCFzs7L6rm7mz --url http://localhost:8899
+        
+        echo "Solana validator ready with funded account"
         wait $$VALIDATOR_PID
     ports:
       - '8899:8899'
       - '8900:8900'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8899/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   chain-gateway:
     build:
@@ -122,8 +138,8 @@ services:
     restart: unless-stopped
     ports:
       - "50051:50051" 
-    # depends_on:
-      # - solana-validator
+    depends_on:
+      - solana-validator
 
   adminer:
     image: adminer
