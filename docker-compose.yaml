@@ -161,19 +161,6 @@ services:
       - solana-validator
     volumes:
       - ./solana-explorer/config:/app/config:ro
-    environment:
-      # Next.js environment variables (these are used by the browser)
-      - NEXT_PUBLIC_CLUSTER=custom
-      - NEXT_PUBLIC_CLUSTER_URL=http://localhost:8899
-      - NEXT_PUBLIC_CLUSTER_NAME=Local Validator
-      - NEXT_PUBLIC_EXPLORER_API_URL=http://localhost:8899
-      # Legacy React environment variables (fallback)
-      - REACT_APP_CLUSTER=custom
-      - REACT_APP_CLUSTER_URL=http://localhost:8899
-      - REACT_APP_CLUSTER_NAME=Local Validator
-      # Disable mainnet connections
-      - NEXT_PUBLIC_DISABLE_MAINNET=true
-      - NODE_ENV=development
 
 volumes:
   db_data:
